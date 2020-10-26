@@ -20,7 +20,7 @@
 #include <eigen3/Eigen/Core>
 #include <eigen3/Eigen/SparseCore>
 
-#include "csc_matrix_conv.h"
+#include "solver_interface/csc_matrix_conv.h"
 
 namespace osqp
 {
@@ -67,7 +67,7 @@ namespace osqp
         return csc_matrix;
     }
 
-    CSC_Matrix calCSCMatrixTrapesoidal(const Eigen::MatrixXd & mat)
+    CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat)
     {
         int elem = mat.nonZeros();
         int rows = mat.rows();
@@ -141,3 +141,4 @@ namespace osqp
     }
 
 }  // namespace osqp
+

@@ -2,7 +2,7 @@
 #include <vector>
 
 #include "astar_optimizer.h"
-#include "osqp.h"
+#include "qp_optimizer.h"
 
 int main() {
 
@@ -95,8 +95,18 @@ int main() {
         std::cout << "v[" << i << "]: " << v_longitudinal[i] << std::endl;
 
     AStarOptimizer optimizer;
-    optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal);
+    //optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal);
 
+    QPOptimizer::OptimizerParam param;
+    param.max_accel = 1.0;
+    param.min_decel = -1.0;
+    param.max_jerk = 1.0;
+    param.min_decel = -1.0;
+    param.jerk_weight = 1.0;
+    param.over_a_weight = 1.0;
+    param.over_v_weight = 1.0;
+    QPOptimizer qp_optimizer(param);
+    qp_optimizer.solve(initial_velocity, initial_acceleration, v_longitudinal, v_longitudinal);
 
     return 0;
 }

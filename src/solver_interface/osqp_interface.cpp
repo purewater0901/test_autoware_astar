@@ -20,8 +20,8 @@
 #include <vector>
 
 #include "osqp.h"
-#include "csc_matrix_conv.h"
-#include "osqp_interface.h"
+#include "solver_interface/csc_matrix_conv.h"
+#include "solver_interface/osqp_interface.h"
 
 namespace osqp
 {
@@ -67,7 +67,7 @@ namespace osqp
         /*******************
          * SET UP MATRICES
          *******************/
-        CSC_Matrix P_csc = calCSCMatrixTrapesoidal(P);
+        CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P);
         CSC_Matrix A_csc = calCSCMatrix(A);
         // Dynamic float arrays
         std::vector<double> q_tmp(q.begin(), q.end());
@@ -86,7 +86,7 @@ namespace osqp
         param_n = P.rows();
 
         /*****************
-         * POLULATE DATA
+         * POPULATE DATA
          *****************/
         data->m = constr_m;
         data->n = param_n;
@@ -100,11 +100,12 @@ namespace osqp
         data->l = l_dyn;
         data->u = u_dyn;
 
-        // For deconstructor
+        // For destructor
         problem_in_memory = true;
 
         // Setup workspace
         exitflag = osqp_setup(&work, data, settings);
+        work_initialized = true;
 
         return exitflag;
     }
@@ -128,7 +129,7 @@ namespace osqp
     void OSQPInterface::updateP(const Eigen::MatrixXd & P_new)
     {
         /*
-        // Transform 'P' into an 'upper trapesoidal matrix'
+        // Transform 'P' into an 'upper trapezoidal matrix'
         Eigen::MatrixXd P_trap = P_new.triangularView<Eigen::Upper>();
         // Transform 'P' into a sparse matrix and extract data as dynamic arrays
         Eigen::SparseMatrix<double> P_sparse = P_trap.sparseView();
@@ -136,7 +137,7 @@ namespace osqp
         // Convert dynamic 'int' arrays to 'c_int' arrays (OSQP input type)
         c_int P_elem_N = P_sparse.nonZeros();
         */
-        CSC_Matrix P_csc = calCSCMatrixTrapesoidal(P_new);
+        CSC_Matrix P_csc = calCSCMatrixTrapezoidal(P_new);
         osqp_update_P(work, P_csc.vals.data(), OSQP_NULL, P_csc.vals.size());
     }
 
@@ -184,15 +185,34 @@ namespace osqp
         osqp_update_bounds(work, l_dyn, u_dyn);
     }
 
-    void OSQPInterface::updateEpsAbs(const double eps_abs) { osqp_update_eps_abs(work, eps_abs); }
+    void OSQPInterface::updateEpsAbs(const double eps_abs)
+    {
+        settings->eps_abs = eps_abs;                               // for default setting
+        if (work_initialized) osqp_update_eps_abs(work, eps_abs);  // for current work
+    }
 
-    void OSQPInterface::updateEpsRel(const double eps_rel) { osqp_update_eps_rel(work, eps_rel); }
+    void OSQPInterface::updateEpsRel(const double eps_rel)
+    {
+        settings->eps_rel = eps_rel;                               // for default setting
+        if (work_initialized) osqp_update_eps_rel(work, eps_rel);  // for current work
+    }
 
-    void OSQPInterface::updateMaxIter(const int max_iter) { osqp_update_max_iter(work, max_iter); }
+    void OSQPInterface::updateMaxIter(const int max_iter)
+    {
+        settings->max_iter = max_iter;                               // for default setting
+        if (work_initialized) osqp_update_max_iter(work, max_iter);  // for current work
+    }
 
-    void OSQPInterface::updateVerbose(const bool is_verbose) { osqp_update_verbose(work, is_verbose); }
+    void OSQPInterface::updateVerbose(const bool is_verbose)
+    {
+        settings->verbose = is_verbose;                               // for default setting
+        if (work_initialized) osqp_update_verbose(work, is_verbose);  // for current work
+    }
 
-    int OSQPInterface::getTakenIter() { return work->info->iter; }
+    void OSQPInterface::updateRhoInterval(const int rho_interval)
+    {
+        settings->adaptive_rho_interval = rho_interval;  // for default setting
+    }
 
     std::tuple<std::vector<double>, std::vector<double>, int, int> OSQPInterface::solve()
     {
@@ -213,6 +233,8 @@ namespace osqp
         // Result tuple
         std::tuple<std::vector<double>, std::vector<double>, int, int> result =
                 std::make_tuple(sol_primal, sol_lagrange_multiplier, status_polish, status_solution);
+
+        latest_work_info = *(work->info);
 
         return result;
     }
@@ -236,6 +258,7 @@ namespace osqp
 
         // Free allocated memory for problem
         osqp_cleanup(work);
+        work_initialized = false;
         return result;
     }
 
@@ -248,3 +271,5 @@ namespace osqp
     c_int OSQPInterface::getExitFlag(void) { return exitflag; }
 
 }  // namespace osqp
+
+
