@@ -6,9 +6,11 @@ double AStarOptimizer::calculateHeuristicCost(const double& s, const double& goa
 }
 
 double AStarOptimizer::calculateActualCost(const double& v, const double& reference_v,
-                                           const double& weight_v, const double& offset)
+                                           const double& weight_v,
+                                           const double& current_a, const double& next_a, const double& dt,
+                                           const double& weight_a, const double& offset)
 {
-    return offset + weight_v * std::pow((v - reference_v), 2);
+    return offset + weight_v * std::pow((v - reference_v), 2) + weight_a*std::pow((current_a-next_a)/dt, 2);;
 }
 
 double AStarOptimizer::calculateMaximumVelocity(const int& index,
@@ -26,15 +28,17 @@ double AStarOptimizer::calculateMaximumVelocity(const int& index,
 void AStarOptimizer::createNewNode(std::set<HAStarNode*>& open_node_list,
                                    std::set<HAStarNode*>& closed_node_list,
                                    HAStarNode* current_node,
-                                   const double& weight_v, const double& goal_s,
+                                   const double& weight_v, const double& weight_a, const double& goal_s,
                                    const double& next_s, const double& next_v, const double& next_t,
                                    const double& next_max_v, const double& a_command,
                                    const int& next_s_id, const int& next_v_id, const int& next_t_id)
 {
     // Calculate New Node costs
+    double current_a = current_node->getAcceleration();
+    double dt = next_t - current_node->getTime();
     double ref_v = std::max(0.0, next_max_v-0.1);
     double current_cost = current_node->getActualCost();
-    double actual_cost = calculateActualCost(next_v, ref_v, weight_v, current_cost) + 1000*std::pow(std::fmax(0, next_v-next_max_v), 2);
+    double actual_cost = calculateActualCost(next_v, ref_v, weight_v, current_a, a_command, dt, weight_a, current_cost) + 1000*std::pow(std::fmax(0, next_v-next_max_v), 2);
     double heuristic_cost = calculateHeuristicCost(next_s, goal_s);
 
 
@@ -86,17 +90,18 @@ void AStarOptimizer::createNewNode(std::set<HAStarNode*>& open_node_list,
     }
 }
 
-bool AStarOptimizer::calculateByFixDistance(const double initial_vel,
-                                            const double initial_acc,
-                                            const unsigned int N,
-                                            const double ds,
-                                            const double dt,
-                                            const double dv,
-                                            const double goal_s,
-                                            const double offset,
-                                            const double tol,
-                                            const double t_max,
-                                            const double weight_v,
+bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
+                                            const double& initial_acc,
+                                            const unsigned int& N,
+                                            const double& ds,
+                                            const double& dt,
+                                            const double& dv,
+                                            const double& goal_s,
+                                            const double& offset,
+                                            const double& tol,
+                                            const double& t_max,
+                                            const double& weight_v,
+                                            const double& weight_a,
                                             const std::vector<double>& output_trajectory_index,
                                             const std::vector<double>& interpolated_max_velocity,
                                             const std::vector<double>& da_list)
@@ -206,7 +211,7 @@ bool AStarOptimizer::calculateByFixDistance(const double initial_vel,
                 next_t_id = current_node->getTimeIndex() + 1;
                 next_s_id = current_node->getPositionIndex();
                 next_v_id = current_node->getVelocityIndex();
-                next_max_v = calculateMaximumVelocity(next_s_id, interpolated_max_velocity);
+                next_max_v = calculateMaximumVelocity(next_s_id, interpolated_max_velocity) + offset;
                 int next_max_v_id = static_cast<int>(std::round(next_max_v/dv));
                 if(next_v_id>next_max_v_id) continue;
 
@@ -218,10 +223,7 @@ bool AStarOptimizer::calculateByFixDistance(const double initial_vel,
                 // update velocity
                 next_v = std::sqrt(std::max(0.0, current_v*current_v+2*a_command*ds));
                 next_v_id = static_cast<int>(std::round(next_v / dv));
-                if(next_s_id>=interpolated_max_velocity.size()-1)
-                    next_max_v =  calculateMaximumVelocity(next_s_id, interpolated_max_velocity);
-                else
-                    next_max_v = calculateMaximumVelocity(next_s_id, interpolated_max_velocity)+offset;
+                next_max_v = calculateMaximumVelocity(next_s_id, interpolated_max_velocity) + offset;
                 int next_max_v_id = static_cast<int>(std::round((next_max_v)/dv));
                 std::cout << "Current s: " << current_s << std::endl;
                 std::cout << "Current t: " << current_t << std::endl;
@@ -261,7 +263,7 @@ bool AStarOptimizer::calculateByFixDistance(const double initial_vel,
              */
 
 
-            createNewNode(open_node_list, closed_node_list, current_node, weight_v, goal_s,
+            createNewNode(open_node_list, closed_node_list, current_node, weight_v, weight_a, goal_s,
                           next_s, next_v, next_t, next_max_v, next_a,
                           next_s_id, next_v_id, next_t_id);
         }
@@ -279,16 +281,16 @@ bool AStarOptimizer::solve(const double initial_vel,
     double tol = 1e-8;
     double t_max = 20.0;
     double weight_v = 1.0;
-    double weight_a = 1.0;
+    double weight_a = 100.0;
     double ds = 1.0;
     double dt = 0.5;
     //double dv = param_.max_accel * dt;
     double dv = 0.01;
-    std::vector<double> da_list = {1.0, 0.0, -1.0, -2.0, -3.0};
+    std::vector<double> da_list = {1.0, 0.0, -1.0};
     double offset = 3.0;
 
     bool is_success = calculateByFixDistance(initial_vel, initial_acc, N, ds, dt, dv, goal_s, offset, tol,
-                                             t_max, weight_v, output_trajectory_index,
+                                             t_max, weight_v, weight_a, output_trajectory_index,
                                              interpolated_max_velocity, da_list);
 
     return is_success;

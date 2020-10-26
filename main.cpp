@@ -2,6 +2,7 @@
 #include <vector>
 
 #include "astar_optimizer.h"
+#include "osqp.h"
 
 int main() {
 
@@ -9,8 +10,9 @@ int main() {
     //double initial_velocity = 7.94965;
     //double initial_acceleration = -1.94025;
     int N = 55;
-    double initial_velocity = 8.13652;
-    double initial_acceleration = -1.99298;
+    //double initial_velocity = 8.13652;
+    double initial_velocity = 7.0;
+    double initial_acceleration = -1.0;
 
     std::vector<double> s_longitudinal(N, 0.0);
     std::vector<double> v_longitudinal(N, 0.0);
@@ -94,7 +96,6 @@ int main() {
 
     AStarOptimizer optimizer;
     optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal);
-
 
 
     return 0;

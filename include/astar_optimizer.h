@@ -22,23 +22,26 @@ public:
                const std::vector<double>& output_trajectory_index,
                const std::vector<double>& interpolated_max_velocity);
 
-    bool calculateByFixDistance(const double initial_vel,
-                                const double initial_acc,
-                                const unsigned int N,
-                                const double ds,
-                                const double dt,
-                                const double dv,
-                                const double goal_s,
-                                const double offset,
-                                const double tol,
-                                const double t_max,
-                                const double weight_v,
+    bool calculateByFixDistance(const double& initial_vel,
+                                const double& initial_acc,
+                                const unsigned int& N,
+                                const double& ds,
+                                const double& dt,
+                                const double& dv,
+                                const double& goal_s,
+                                const double& offset,
+                                const double& tol,
+                                const double& t_max,
+                                const double& weight_v,
+                                const double& weight_a,
                                 const std::vector<double>& output_trajectory_index,
                                 const std::vector<double>& interpolated_max_velocity,
                                 const std::vector<double>& da_list);
 
     double calculateActualCost(const double& v, const double& reference_v,
-                               const double& weight_v, const double& offset);
+                               const double& weight_v, const double& current_a, const double& next_a, const double& dt,
+                               const double& weight_a, const double& offset);
+
     double calculateHeuristicCost(const double& s, const double& goal_s);
 
     double calculateMaximumVelocity(const int& index, const std::vector<double>& vmax_vec);
@@ -46,7 +49,7 @@ public:
     void createNewNode(std::set<HAStarNode*>& open_node_list,
                        std::set<HAStarNode*>& closed_node_list,
                        HAStarNode* current_node,
-                       const double& weight_v, const double& goal_s,
+                       const double& weight_v, const double& weight_a, const double& goal_s,
                        const double& next_s, const double& next_v, const double& next_t,
                        const double& next_max_v, const double& a_command,
                        const int& next_s_id, const int& next_v_id, const int& next_t_id);
