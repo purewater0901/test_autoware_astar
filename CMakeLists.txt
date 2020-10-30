@@ -14,7 +14,8 @@ add_executable(test_hybrid_astar main.cpp src/astar_nodes/hastar_node.cpp
                                           src/astar_nodes/node_utils.cpp
                                           src/astar_optimizer.cpp
                                           src/qp_optimizer.cpp
-        src/solver_interface/osqp_interface.cpp
-        src/solver_interface/csc_matrix_conv.cpp)
+                                          src/solver_interface/osqp_interface.cpp
+                                          src/solver_interface/csc_matrix_conv.cpp
+                                          src/interpolate.cpp)
 
 target_link_libraries(test_hybrid_astar PRIVATE osqp::osqp)

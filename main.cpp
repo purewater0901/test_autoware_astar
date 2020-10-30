@@ -3,6 +3,7 @@
 
 #include "astar_optimizer.h"
 #include "qp_optimizer.h"
+#include "interpolate.h"
 
 int main() {
 
@@ -12,7 +13,7 @@ int main() {
     int N = 55;
     //double initial_velocity = 8.13652;
     double initial_velocity = 7.0;
-    double initial_acceleration = -1.0;
+    double initial_acceleration = -0.8;
 
     std::vector<double> s_longitudinal(N, 0.0);
     std::vector<double> v_longitudinal(N, 0.0);
@@ -95,9 +96,31 @@ int main() {
         std::cout << "v[" << i << "]: " << v_longitudinal[i] << std::endl;
 
     AStarOptimizer optimizer;
-    //optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal);
+    std::vector<double> optimum_position;
+    std::vector<double> optimum_velocity;
+    std::vector<double> optimum_acceleration;
+    std::vector<double> optimum_time;
+    optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal,
+                    optimum_position, optimum_velocity, optimum_acceleration, optimum_time);
 
-    QPOptimizer::OptimizerParam param;
+    double qp_dt = 0.2;
+    double max_time = optimum_time.back();
+    int qp_size = static_cast<int>(max_time/qp_dt);
+    std::vector<double> input_time(qp_size, 0.0);
+    for(int i=1; i<qp_size; ++i)
+        input_time[i] = input_time[i-1] + qp_dt;
+
+    std::vector<double> input_velocity;
+    std::vector<double> input_acceleration;
+    LinearInterpolate::interpolate(optimum_time, optimum_velocity, input_time, input_velocity);
+    LinearInterpolate::interpolate(optimum_time, optimum_acceleration, input_time, input_acceleration);
+
+    for(int i=0; i<input_acceleration.size(); ++i)
+    {
+        std::cout << "a_Ref[" << i << "]: " << input_acceleration[i] << std::endl;
+    }
+
+    QPOptimizer::OptimizerParam param{};
     param.max_accel = 1.0;
     param.min_decel = -1.0;
     param.max_jerk = 1.0;
@@ -105,8 +128,9 @@ int main() {
     param.jerk_weight = 1.0;
     param.over_a_weight = 1.0;
     param.over_v_weight = 1.0;
+    param.dt = qp_dt;
     QPOptimizer qp_optimizer(param);
-    qp_optimizer.solve(initial_velocity, initial_acceleration, v_longitudinal, v_longitudinal);
+    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity);
 
     return 0;
 }

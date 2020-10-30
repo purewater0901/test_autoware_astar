@@ -17,8 +17,9 @@
 #include <iostream>
 #include <vector>
 
-#include <eigen3/Eigen/Core>
-#include <eigen3/Eigen/SparseCore>
+#include <Eigen/Eigen>
+//#include <eigen3/Eigen/Core>
+//#include <eigen3/Eigen/SparseCore>
 
 #include "solver_interface/csc_matrix_conv.h"
 

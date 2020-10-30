@@ -5,7 +5,8 @@
 #include <vector>
 #include <set>
 #include <chrono>
-#include <eigen3/Eigen/Core>
+//#include <eigen3/Eigen/Core>
+#include <Eigen/Eigen>
 
 #include <astar_nodes/hastar_node.h>
 #include <astar_nodes/node_utils.h>
@@ -20,7 +21,11 @@ public:
                const int N,
                const double goal_s,
                const std::vector<double>& output_trajectory_index,
-               const std::vector<double>& interpolated_max_velocity);
+               const std::vector<double>& interpolated_max_velocity,
+               std::vector<double>& optimum_position,
+               std::vector<double>& optimum_velocity,
+               std::vector<double>& optimum_acceleration,
+               std::vector<double>& optimum_time);
 
     bool calculateByFixDistance(const double& initial_vel,
                                 const double& initial_acc,
@@ -36,7 +41,11 @@ public:
                                 const double& weight_a,
                                 const std::vector<double>& output_trajectory_index,
                                 const std::vector<double>& interpolated_max_velocity,
-                                const std::vector<double>& da_list);
+                                const std::vector<double>& da_list,
+                                std::vector<double>& optimum_position,
+                                std::vector<double>& optimum_velocity,
+                                std::vector<double>& optimum_acceleration,
+                                std::vector<double>& optimum_time);
 
     double calculateActualCost(const double& v, const double& reference_v,
                                const double& weight_v, const double& current_a, const double& next_a, const double& dt,

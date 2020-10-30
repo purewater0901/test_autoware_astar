@@ -16,7 +16,8 @@
 #ifndef TEST_HYBRID_ASTAR_CSC_MATRIX_CONV_H
 #define TEST_HYBRID_ASTAR_CSC_MATRIX_CONV_H
 
-#include <eigen3/Eigen/Core>
+#include <Eigen/Eigen>
+//#include <eigen3/Eigen/Core>
 #include <vector>
 #include "types.h"  // for 'c_int' type ('long' or 'long long')
 

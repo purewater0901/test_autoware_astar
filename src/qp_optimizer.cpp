@@ -1,8 +1,7 @@
 #include "qp_optimizer.h"
 
-QPOptimizer::QPOptimizer(const OptimizerParam &param)
+QPOptimizer::QPOptimizer(const OptimizerParam &param) : param_(param)
 {
-    param_ = param;
     qp_solver_.updateMaxIter(4000);
     qp_solver_.updateRhoInterval(0);  // 0 means automoatic
     qp_solver_.updateEpsRel(1.0e-4);  // def: 1.0e-4
@@ -32,12 +31,12 @@ bool QPOptimizer::solve(const double &initial_vel,
      */
 
     /*
-     * x = [v0, v1, ..., vN]
+     * x = [v[0], v[1], ..., v[N], | a[0], a[1], .... a[N]]
      * 0 < v < v_ref
      */
 
-    const uint32_t l_variables = N;
-    const uint32_t l_constraints = N;
+    const uint32_t l_variables = 2*N;
+    const uint32_t l_constraints = 2*N;
 
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(
             l_constraints, l_variables);  // the matrix size depends on constraint numbers.
@@ -66,11 +65,30 @@ bool QPOptimizer::solve(const double &initial_vel,
         lower_bound[i] = 0.0;
     }
 
-    // initial condition
+    // initial velocity condition
     const double v0 = initial_vel;
     A(0, 0) = 1.0;  // b0
     upper_bound[0] = v0;
     lower_bound[0] = v0;
+
+    /*
+     * a[i] = (v[i+1]-v[i])/dt
+     * a[i]*dt - v[i+1] + v[i] = 0.0
+     */
+    for(int i=N+1; i<2*N; ++i)
+    {
+        int j=i-N-1;
+        A(i, j)   = 1.0; //v[i]
+        A(i, j+1) = -1.0;  //v[i+1]
+        A(i, i) = param_.dt; //a[i]*dt
+        upper_bound[i] = 0.0;
+        lower_bound[i] = 0.0;
+    }
+
+    //initial acceleration condition
+    A(N, N) = 1.0; //a[0]
+    upper_bound[N] = initial_acc;
+    lower_bound[N] = initial_acc;
 
     const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
 
@@ -78,6 +96,9 @@ bool QPOptimizer::solve(const double &initial_vel,
     const std::vector<double> optval = std::get<0>(result);
     for(int i=0; i<N; ++i)
         std::cout << "v_result[" << i << "]: " << optval.at(i) << "[m/s]" << std::endl;
+    std::cout << "---------------------" << std::endl;
+    for(int i=N; i<2*N-1; ++i)
+        std::cout << "a_result[" << i-N << "]: " << optval.at(i) << "[m/s^2]" << std::endl;
 
 
     return true;

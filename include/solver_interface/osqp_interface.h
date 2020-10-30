@@ -1,11 +1,11 @@
 #ifndef TEST_HYBRID_ASTAR_OSQP_INTERFACE_H
 #define TEST_HYBRID_ASTAR_OSQP_INTERFACE_H
 
-#include <eigen3/Eigen/Core>
+//#include <eigen3/Eigen/Core>
+#include <Eigen/Eigen>
 #include <vector>
 #include "osqp.h"
 
-#include <eigen3/Eigen/Core>
 #include <string>
 #include <vector>
 #include "osqp.h"

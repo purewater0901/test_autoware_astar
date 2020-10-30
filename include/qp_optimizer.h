@@ -7,6 +7,7 @@
 #include <cassert>
 #include <iostream>
 #include "solver_interface/osqp_interface.h"
+#include "interpolate.h"
 #include "osqp.h"
 
 class QPOptimizer
@@ -21,6 +22,7 @@ public:
         double jerk_weight;
         double over_v_weight;
         double over_a_weight;
+        double dt;
     };
 
     QPOptimizer(const OptimizerParam& param);

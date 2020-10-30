@@ -104,7 +104,11 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                                             const double& weight_a,
                                             const std::vector<double>& output_trajectory_index,
                                             const std::vector<double>& interpolated_max_velocity,
-                                            const std::vector<double>& da_list)
+                                            const std::vector<double>& da_list,
+                                            std::vector<double>& optimum_position,
+                                            std::vector<double>& optimum_velocity,
+                                            std::vector<double>& optimum_acceleration,
+                                            std::vector<double>& optimum_time)
 {
     // node list
     std::set<HAStarNode*> open_node_list;
@@ -124,12 +128,10 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
 
 
     // solve the problem
-    std::vector<double> optimum_position;
-    std::vector<double> optimum_velocity;
-    std::vector<double> optimum_acceleration;
     optimum_position.reserve(output_trajectory_index.size());
     optimum_velocity.reserve(output_trajectory_index.size());
     optimum_acceleration.reserve(output_trajectory_index.size());
+    optimum_time.reserve(output_trajectory_index.size());
     while(true)
     {
         if(open_node_list.empty())
@@ -154,11 +156,13 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 optimum_position.push_back(current_node->getPosition());
                 optimum_velocity.push_back(current_node->getVelocity());
                 optimum_acceleration.push_back(current_node->getAcceleration());
+                optimum_time.push_back(current_node->getTime());
                 current_node = current_node->getParentNode();
             }
             std::reverse(optimum_position.begin(), optimum_position.end());
             std::reverse(optimum_velocity.begin(), optimum_velocity.end());
             std::reverse(optimum_acceleration.begin(), optimum_acceleration.end());
+            std::reverse(optimum_time.begin(), optimum_time.end());
 
 
             for(int i=0; i<optimum_position.size(); ++i){
@@ -275,7 +279,11 @@ bool AStarOptimizer::solve(const double initial_vel,
                            const int N,
                            const double goal_s,
                            const std::vector<double>& output_trajectory_index,
-                           const std::vector<double>& interpolated_max_velocity)
+                           const std::vector<double>& interpolated_max_velocity,
+                           std::vector<double>& optimum_position,
+                           std::vector<double>& optimum_velocity,
+                           std::vector<double>& optimum_acceleration,
+                           std::vector<double>& optimum_time)
 {
     // parameters
     double tol = 1e-8;
@@ -291,7 +299,8 @@ bool AStarOptimizer::solve(const double initial_vel,
 
     bool is_success = calculateByFixDistance(initial_vel, initial_acc, N, ds, dt, dv, goal_s, offset, tol,
                                              t_max, weight_v, weight_a, output_trajectory_index,
-                                             interpolated_max_velocity, da_list);
+                                             interpolated_max_velocity, da_list,
+                                             optimum_position, optimum_velocity, optimum_acceleration, optimum_time);
 
     return is_success;
 }
