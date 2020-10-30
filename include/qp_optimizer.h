@@ -32,7 +32,8 @@ public:
     bool solve(const double& initial_vel,
                const double& initial_acc,
                const std::vector<double>& ref_vel,
-               const std::vector<double>& max_vel);
+               const std::vector<double>& max_vel,
+               const std::vector<double>& ref_acc);
 
 private:
     OptimizerParam param_;

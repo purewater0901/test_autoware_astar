@@ -114,11 +114,7 @@ int main() {
     std::vector<double> input_acceleration;
     LinearInterpolate::interpolate(optimum_time, optimum_velocity, input_time, input_velocity);
     LinearInterpolate::interpolate(optimum_time, optimum_acceleration, input_time, input_acceleration);
-
-    for(int i=0; i<input_acceleration.size(); ++i)
-    {
-        std::cout << "a_Ref[" << i << "]: " << input_acceleration[i] << std::endl;
-    }
+    input_velocity.back() = 0.0;
 
     QPOptimizer::OptimizerParam param{};
     param.max_accel = 1.0;
@@ -130,7 +126,7 @@ int main() {
     param.over_v_weight = 1.0;
     param.dt = qp_dt;
     QPOptimizer qp_optimizer(param);
-    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity);
+    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity, input_acceleration);
 
     return 0;
 }

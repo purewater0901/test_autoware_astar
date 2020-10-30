@@ -16,8 +16,9 @@ void QPOptimizer::setParam(const OptimizerParam &param)
 
 bool QPOptimizer::solve(const double &initial_vel,
                         const double &initial_acc,
-                        const std::vector<double> &ref_vel,
-                        const std::vector<double> &max_vel)
+                        const std::vector<double>& ref_vel,
+                        const std::vector<double>& max_vel,
+                        const std::vector<double>& ref_acc)
 {
     assert(ref_vel.size()==max_vel.size());
     int N = ref_vel.size();
@@ -31,12 +32,14 @@ bool QPOptimizer::solve(const double &initial_vel,
      */
 
     /*
-     * x = [v[0], v[1], ..., v[N], | a[0], a[1], .... a[N]]
-     * 0 < v < v_ref
+     * x = [v[0], v[1], ..., v[N], | a[0], a[1], .... a[N], | jerk[0], jerk[1], ..., jerk[N],| delta[0], ..., delta[N],
+     *      | sigma[0], sigma[1], ...., sigma[N]]
+     * delta: 0 < v[i]-delta[i] < v_ref
+     * sigma: amin < a[i] - sigma[i] < amax
      */
 
-    const uint32_t l_variables = 2*N;
-    const uint32_t l_constraints = 2*N;
+    const uint32_t l_variables = 5*N;
+    const uint32_t l_constraints = 5*N;
 
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(
             l_constraints, l_variables);  // the matrix size depends on constraint numbers.
@@ -53,6 +56,18 @@ bool QPOptimizer::solve(const double &initial_vel,
         P(i, i) = 1.0;
         q[i] = -2*ref_vel[i];
     }
+
+    // jerk[i]
+    for(unsigned int i=2*N; i<3*N; ++i)
+        P(i, i) = 10.0;
+
+    // delta[i]
+    for(unsigned int i=3*N; i<4*N; ++i)
+        P(i, i) = 5.0;
+
+    // sigma[i]
+    for(unsigned int i=4*N; i<5*N; ++i)
+        P(i, i) = 100000000.0;
 
     /*
      * design constraint matrix
@@ -90,16 +105,61 @@ bool QPOptimizer::solve(const double &initial_vel,
     upper_bound[N] = initial_acc;
     lower_bound[N] = initial_acc;
 
+    /*
+     * jerk[i] = (a[i+1]-a[i])/dt
+     * jerk[i]*dt - a[i+1] + a[i] = 0.0
+     */
+    for(int i=2*N+1; i<3*N; ++i)
+    {
+        int j=i-N-1;
+        A(i, j)   = 1.0;    //a[i]
+        A(i, j+1) = -1.0;   //a[i+1]
+        A(i, i) = param_.dt; //jerk[i]*dt
+        upper_bound[i] = 0.0;
+        lower_bound[i] = 0.0;
+    }
+
+    //initial jerk condition
+    A(2*N, 2*N) = 1.0; //jerk[0]
+    upper_bound[2*N] = 0.0;
+    lower_bound[2*N] = 0.0;
+
+    /*
+     * Maximum Velocity Constraint
+     * 0 < v[i] - delta[i] < v_ref[i]
+     */
+    for(int i=3*N; i<4*N; ++i)
+    {
+        int j = i - 3*N;
+        A(i, j) = 1.0; //v[i]
+        A(i, i) = -1.0; //-delta[i]
+        upper_bound[i] = ref_vel[i-3*N];
+        lower_bound[i] = 0.0;
+    }
+
+    /*
+     * Maximum Acceleration Constraint
+     * amin < a[i] - sigma[i] < amax
+     */
+    for(int i=4*N; i<5*N; ++i)
+    {
+        int j = i - 3*N;
+        A(i, j) = 1.0; //a[i]
+        A(i, i) = -1.0; //-sigma[i]
+        upper_bound[i] = param_.max_accel;
+        lower_bound[i] = param_.min_decel;
+    }
+
+
     const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
 
     // [x0, x1, ..., xN]
     const std::vector<double> optval = std::get<0>(result);
     for(int i=0; i<N; ++i)
-        std::cout << "v_result[" << i << "]: " << optval.at(i) << "[m/s]" << std::endl;
+        std::cout << "v_result[" << i << "]: " << optval.at(i) << "[m/s]     " << ref_vel[i] << "[m/s]" << std::endl;
     std::cout << "---------------------" << std::endl;
-    for(int i=N; i<2*N-1; ++i)
-        std::cout << "a_result[" << i-N << "]: " << optval.at(i) << "[m/s^2]" << std::endl;
-
+    for(int i=N; i<2*N; ++i)
+        std::cout << "a_result[" << i-N << "]: " << optval.at(i) << "[m/s^2]  " << ref_acc[i-N] << "[m/s^2]" << std::endl;
 
     return true;
 }
