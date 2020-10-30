@@ -33,13 +33,14 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     /*
      * x = [v[0], v[1], ..., v[N], | a[0], a[1], .... a[N], | jerk[0], jerk[1], ..., jerk[N],| delta[0], ..., delta[N],
-     *      | sigma[0], sigma[1], ...., sigma[N]]
+     *      | sigma[0], sigma[1], ...., sigma[N], | gamma[0], gamma[1], ..., gamma[N] ]
      * delta: 0 < v[i]-delta[i] < v_ref
      * sigma: amin < a[i] - sigma[i] < amax
+     * gamma: jerk_min < jerk[i] - gamma[i] < jerk_max
      */
 
-    const uint32_t l_variables = 5*N;
-    const uint32_t l_constraints = 5*N;
+    const uint32_t l_variables = 6*N;
+    const uint32_t l_constraints = 6*N;
 
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(
             l_constraints, l_variables);  // the matrix size depends on constraint numbers.
@@ -67,6 +68,10 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     // sigma[i]
     for(unsigned int i=4*N; i<5*N; ++i)
+        P(i, i) = 100000000.0;
+
+    // gamma[i]
+    for(unsigned int i=5*N; i<6*N; ++i)
         P(i, i) = 100000000.0;
 
     /*
@@ -138,7 +143,7 @@ bool QPOptimizer::solve(const double &initial_vel,
     }
 
     /*
-     * Maximum Acceleration Constraint
+     * Acceleration Constraint
      * amin < a[i] - sigma[i] < amax
      */
     for(int i=4*N; i<5*N; ++i)
@@ -149,6 +154,21 @@ bool QPOptimizer::solve(const double &initial_vel,
         upper_bound[i] = param_.max_accel;
         lower_bound[i] = param_.min_decel;
     }
+
+    /*
+     * Jerk Constraint
+     * jerk_min < jerk[i] - gamma[i] < jerk_max
+     */
+    /*
+    for(int i=5*N; i<6*N; ++i)
+    {
+        int j = i - 3*N;
+        A(i, j) = 1.0; //jerk[i]
+        A(i, i) = -1.0; //-gamma[i]
+        upper_bound[i] = param_.max_jerk;
+        lower_bound[i] = param_.min_jerk;
+    }
+     */
 
 
     const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);

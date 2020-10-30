@@ -119,8 +119,8 @@ int main() {
     QPOptimizer::OptimizerParam param{};
     param.max_accel = 1.0;
     param.min_decel = -1.0;
-    param.max_jerk = 1.0;
-    param.min_decel = -1.0;
+    param.max_jerk = 1.3;
+    param.min_decel = -1.3;
     param.jerk_weight = 1.0;
     param.over_a_weight = 1.0;
     param.over_v_weight = 1.0;
