@@ -18,7 +18,11 @@ bool QPOptimizer::solve(const double &initial_vel,
                         const double &initial_acc,
                         const std::vector<double>& ref_vel,
                         const std::vector<double>& max_vel,
-                        const std::vector<double>& ref_acc)
+                        const std::vector<double>& ref_acc,
+                        std::vector<double>& qp_time,
+                        std::vector<double>& qp_velocity,
+                        std::vector<double>& qp_acceleration,
+                        std::vector<double>& qp_jerk)
 {
     assert(ref_vel.size()==max_vel.size());
     int N = ref_vel.size();
@@ -68,11 +72,11 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     // sigma[i]
     for(unsigned int i=4*N; i<5*N; ++i)
-        P(i, i) = 100000000.0;
+        P(i, i) = 100000.0;
 
     // gamma[i]
     for(unsigned int i=5*N; i<6*N; ++i)
-        P(i, i) = 100000000.0;
+        P(i, i) = 100000.0;
 
     /*
      * design constraint matrix
@@ -159,7 +163,6 @@ bool QPOptimizer::solve(const double &initial_vel,
      * Jerk Constraint
      * jerk_min < jerk[i] - gamma[i] < jerk_max
      */
-    /*
     for(int i=5*N; i<6*N; ++i)
     {
         int j = i - 3*N;
@@ -168,7 +171,6 @@ bool QPOptimizer::solve(const double &initial_vel,
         upper_bound[i] = param_.max_jerk;
         lower_bound[i] = param_.min_jerk;
     }
-     */
 
 
     const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
@@ -180,6 +182,20 @@ bool QPOptimizer::solve(const double &initial_vel,
     std::cout << "---------------------" << std::endl;
     for(int i=N; i<2*N; ++i)
         std::cout << "a_result[" << i-N << "]: " << optval.at(i) << "[m/s^2]  " << ref_acc[i-N] << "[m/s^2]" << std::endl;
+
+    qp_time.resize(N);
+    qp_velocity.resize(N);
+    qp_acceleration.resize(N);
+    qp_jerk.resize(N);
+    qp_velocity[0] = 0.0;
+    for(int i=1; i<N; ++i)
+        qp_time[i] = qp_time[i-1] + param_.dt;
+    for(int i=0; i<N; ++i)
+        qp_velocity[i] = optval.at(i);
+    for(int i=N; i<2*N; ++i)
+        qp_acceleration[i] = optval.at(i);
+    for(int i=2*N; i<3*N; ++i)
+        qp_jerk[i] = optval.at(i);
 
     return true;
 }

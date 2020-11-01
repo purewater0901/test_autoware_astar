@@ -4,6 +4,7 @@
 #include "astar_optimizer.h"
 #include "qp_optimizer.h"
 #include "interpolate.h"
+#include "utils.h"
 
 int main() {
 
@@ -119,14 +120,23 @@ int main() {
     QPOptimizer::OptimizerParam param{};
     param.max_accel = 1.0;
     param.min_decel = -1.0;
-    param.max_jerk = 1.3;
-    param.min_decel = -1.3;
+    param.max_jerk = 0.3;
+    param.min_decel = -0.3;
     param.jerk_weight = 1.0;
     param.over_a_weight = 1.0;
     param.over_v_weight = 1.0;
     param.dt = qp_dt;
     QPOptimizer qp_optimizer(param);
-    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity, input_acceleration);
+
+    std::vector<double> qp_time;
+    std::vector<double> qp_velocity;
+    std::vector<double> qp_acceleration;
+    std::vector<double> qp_jerk;
+    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity, input_acceleration,
+                       qp_time, qp_velocity, qp_acceleration, qp_jerk);
+
+    std::string filename = "../result/output.csv";
+    Utils::outputResultToFile(filename, qp_time, qp_velocity, qp_acceleration, qp_jerk);
 
     return 0;
 }

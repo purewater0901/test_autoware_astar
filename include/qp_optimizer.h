@@ -33,7 +33,11 @@ public:
                const double& initial_acc,
                const std::vector<double>& ref_vel,
                const std::vector<double>& max_vel,
-               const std::vector<double>& ref_acc);
+               const std::vector<double>& ref_acc,
+               std::vector<double>& qp_time,
+               std::vector<double>& qp_velocity,
+               std::vector<double>& qp_acceleration,
+               std::vector<double>& qp_jerk);
 
 private:
     OptimizerParam param_;
