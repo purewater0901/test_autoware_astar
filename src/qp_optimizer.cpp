@@ -193,9 +193,9 @@ bool QPOptimizer::solve(const double &initial_vel,
     for(int i=0; i<N; ++i)
         qp_velocity[i] = optval.at(i);
     for(int i=N; i<2*N; ++i)
-        qp_acceleration[i] = optval.at(i);
+        qp_acceleration[i-N] = optval.at(i);
     for(int i=2*N; i<3*N; ++i)
-        qp_jerk[i] = optval.at(i);
+        qp_jerk[i-2*N] = optval.at(i);
 
     return true;
 }
