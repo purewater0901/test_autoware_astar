@@ -18,7 +18,11 @@ namespace Utils
                             const std::vector<double>& qp_acceleration,
                             const std::vector<double>& qp_jerk);
 
-    void outputResultToFile(const std::vector<double>& data);
+    void outputResultToFile(const std::string& filename,
+                            const std::vector<double>& astar_time,
+                            const std::vector<double>& astar_velocity,
+                            const std::vector<double>& astar_acceleration);
+
 }
 
 #endif //TEST_HYBRID_ASTAR_UTILS_H

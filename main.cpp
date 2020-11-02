@@ -135,8 +135,10 @@ int main() {
     qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity, input_acceleration,
                        qp_time, qp_velocity, qp_acceleration, qp_jerk);
 
-    std::string filename = "../result/output.csv";
-    Utils::outputResultToFile(filename, qp_time, qp_velocity, qp_acceleration, qp_jerk);
+    std::string qp_filename = "../result/qp_result.csv";
+    std::string astar_filename = "../result/astar_result.csv";
+    Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk);
+    Utils::outputResultToFile(astar_filename, input_time, input_velocity, input_acceleration);
 
     return 0;
 }

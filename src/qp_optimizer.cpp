@@ -64,7 +64,7 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     // jerk[i]
     for(unsigned int i=2*N; i<3*N; ++i)
-        P(i, i) = 10.0;
+        P(i, i) = 0.0;
 
     // delta[i]
     for(unsigned int i=3*N; i<4*N; ++i)
