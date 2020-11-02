@@ -9,7 +9,8 @@ mkdir build
 cd build
 cmake ..
 make 
-./test_hybrid_astar
+cd ..
+./build/test_hybrid_astar
 ```
 
 - visualization
