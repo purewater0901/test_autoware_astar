@@ -1,4 +1,4 @@
-# test_autoware_astar
+# Astar and QP Velocity Planner
 
 # 1. Implementation
 - Run Main Code
