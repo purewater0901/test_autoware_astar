@@ -7,7 +7,7 @@ mkdir build
 cd build
 cmake ..
 make 
-./test_autoware_astar
+./test_hybrid_astar
 ```
 
 - visualization
