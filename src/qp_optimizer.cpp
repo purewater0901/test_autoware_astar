@@ -26,14 +26,7 @@ bool QPOptimizer::solve(const double &initial_vel,
 {
     assert(ref_vel.size()==max_vel.size());
     int N = ref_vel.size();
-
-    /*
-     * x = [b0, b1, ..., bN, |  a0, a1, ..., aN, | delta0, delta1, ..., deltaN, | sigma0, sigma1, ..., sigmaN] in R^{4N}
-     * b: velocity^2
-     * a: acceleration
-     * delta: 0 < bi < vmax^2 + delta
-     * sigma: amin < ai - sigma < amax
-     */
+    double v_margin = 1.0;
 
     /*
      * x = [v[0], v[1], ..., v[N], | a[0], a[1], .... a[N], | jerk[0], jerk[1], ..., jerk[N],| delta[0], ..., delta[N],
@@ -44,7 +37,7 @@ bool QPOptimizer::solve(const double &initial_vel,
      */
 
     const uint32_t l_variables = 6*N;
-    const uint32_t l_constraints = 6*N;
+    const uint32_t l_constraints = 5*N;
 
     Eigen::MatrixXd A = Eigen::MatrixXd::Zero(
             l_constraints, l_variables);  // the matrix size depends on constraint numbers.
@@ -68,7 +61,7 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     // delta[i]
     for(unsigned int i=3*N; i<4*N; ++i)
-        P(i, i) = 5.0;
+        P(i, i) = 100000.0;
 
     // sigma[i]
     for(unsigned int i=4*N; i<5*N; ++i)
@@ -80,12 +73,14 @@ bool QPOptimizer::solve(const double &initial_vel,
 
     /*
      * design constraint matrix
-     * 0 < v < v_ref^2
+     * v_ref - v_margin < v - delta[i] < v_ref
      */
-    for(unsigned int i=0; i<N; ++i)
+    for(unsigned int i=1; i<N; ++i)
     {
-        A(i, i) = 1.0;
+        A(i, i) = 1.0; //v[i]
+        A(i, i+3*N) = -1.0; //-delta[i]
         upper_bound[i] = ref_vel[i];
+        //lower_bound[i] = std::max(ref_vel[i] - v_margin, 0.0);
         lower_bound[i] = 0.0;
     }
 
@@ -134,27 +129,14 @@ bool QPOptimizer::solve(const double &initial_vel,
     lower_bound[2*N] = 0.0;
 
     /*
-     * Maximum Velocity Constraint
-     * 0 < v[i] - delta[i] < v_ref[i]
-     */
-    for(int i=3*N; i<4*N; ++i)
-    {
-        int j = i - 3*N;
-        A(i, j) = 1.0; //v[i]
-        A(i, i) = -1.0; //-delta[i]
-        upper_bound[i] = ref_vel[i-3*N];
-        lower_bound[i] = 0.0;
-    }
-
-    /*
      * Acceleration Constraint
      * amin < a[i] - sigma[i] < amax
      */
-    for(int i=4*N; i<5*N; ++i)
+    for(int i=3*N; i<4*N; ++i)
     {
-        int j = i - 3*N;
+        int j = i - 2*N;
         A(i, j) = 1.0; //a[i]
-        A(i, i) = -1.0; //-sigma[i]
+        A(i, i+N) = -1.0; //-sigma[i]
         upper_bound[i] = param_.max_accel;
         lower_bound[i] = param_.min_decel;
     }
@@ -163,11 +145,11 @@ bool QPOptimizer::solve(const double &initial_vel,
      * Jerk Constraint
      * jerk_min < jerk[i] - gamma[i] < jerk_max
      */
-    for(int i=5*N; i<6*N; ++i)
+    for(int i=4*N; i<5*N; ++i)
     {
-        int j = i - 3*N;
+        int j = i - 2*N;
         A(i, j) = 1.0; //jerk[i]
-        A(i, i) = -1.0; //-gamma[i]
+        A(i, i+N) = -1.0; //-gamma[i]
         upper_bound[i] = param_.max_jerk;
         lower_bound[i] = param_.min_jerk;
     }
