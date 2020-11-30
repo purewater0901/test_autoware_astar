@@ -80,8 +80,7 @@ bool QPOptimizer::solve(const double &initial_vel,
         A(i, i) = 1.0; //v[i]
         A(i, i+3*N) = -1.0; //-delta[i]
         upper_bound[i] = ref_vel[i];
-        //lower_bound[i] = std::max(ref_vel[i] - v_margin, 0.0);
-        lower_bound[i] = 0.0;
+        lower_bound[i] = std::max(ref_vel[i] - v_margin, 0.0);
     }
 
     // initial velocity condition

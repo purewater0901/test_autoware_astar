@@ -8,6 +8,18 @@
 
 int main() {
 
+    AStarOptimizer::AStarOptimizerParam astar_param{};
+    astar_param.max_accel = 1.0;
+    astar_param.min_decel = -1.0;
+    astar_param.weight_s = 10.0;
+    astar_param.weight_v = 1.0;
+    astar_param.weight_jerk = 1.0;
+    astar_param.weight_over_v = 1e6;
+    astar_param.dt = 0.1;
+    astar_param.ds = 1.0;
+    astar_param.dv = 0.1;
+    astar_param.max_time = 30.0;
+
     //int N = 59;
     //double initial_velocity = 7.94965;
     //double initial_acceleration = -1.94025;
@@ -96,14 +108,12 @@ int main() {
     for(int i=0; i<v_longitudinal.size(); ++i)
         std::cout << "v[" << i << "]: " << v_longitudinal[i] << std::endl;
 
-    AStarOptimizer optimizer;
-    std::vector<double> optimum_position;
-    std::vector<double> optimum_velocity;
-    std::vector<double> optimum_acceleration;
-    std::vector<double> optimum_time;
-    optimizer.solve(initial_velocity, initial_acceleration, N, s_goal, s_longitudinal, v_longitudinal,
-                    optimum_position, optimum_velocity, optimum_acceleration, optimum_time);
+    AStarOptimizer astar_optimizer(astar_param);
+    AStarOptimizer::AStarOutputInfo astar_output_info;
+    astar_optimizer.solve(initial_velocity, initial_acceleration, 0, v_longitudinal, s_longitudinal,
+                            astar_output_info);
 
+    /*
     double qp_dt = 0.2;
     double max_time = optimum_time.back();
     int qp_size = static_cast<int>(max_time/qp_dt);
@@ -139,6 +149,7 @@ int main() {
     std::string astar_filename = "../result/astar_result.csv";
     Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk);
     Utils::outputResultToFile(astar_filename, input_time, input_velocity, input_acceleration);
+     */
 
     return 0;
 }
