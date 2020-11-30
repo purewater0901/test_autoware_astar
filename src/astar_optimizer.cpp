@@ -13,8 +13,8 @@ double AStarOptimizer::calculateActualCost(const double& v, const double& refere
                                            const double& offset)
 {
     return offset + param_.weight_v * std::pow((v - reference_v), 2)  // Velocity Follow cost
-           + param_.weight_jerk * std::pow((current_a-next_a)/dt, 2) // Jerk Cost
-           + param_.weight_over_v * std::pow(std::fmax(0, v - reference_v), 2); // Maximum Velocity Constraint Soft Cost
+           + param_.weight_jerk * std::pow((current_a-next_a)/dt, 2); // Jerk Cost
+           //+ param_.weight_over_v * std::pow(std::fmax(0, v - reference_v), 2); // Maximum Velocity Constraint Soft Cost
 }
 
 double AStarOptimizer::calculateMaximumVelocity(const int& index,
@@ -223,7 +223,7 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                     continue;
 
                 // Update acceleration
-                next_node_info.a = (next_node_info.v * next_node_info.v- current_v*current_v)/(2*param_.ds);
+                next_node_info.a = (next_node_info.v * next_node_info.v- current_v*current_v)/(2*param_.ds*s_direction);
 
                 double t_increase;
                 if(v_direction==0)
@@ -236,6 +236,17 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
             }
 
             if (next_node_info.t > param_.max_time) continue;
+
+            std::cout << "direction s: " << directions[i].first  << std::endl;
+            std::cout << "direction v: " << directions[i].second << std::endl;
+            std::cout << "next s: " << next_node_info.s << std::endl;
+            std::cout << "next v: " << next_node_info.v << std::endl;
+            std::cout << "next t: " << next_node_info.t << std::endl;
+            std::cout << "next s id: " << next_node_info.s_id << std::endl;
+            std::cout << "next v id: " << next_node_info.v_id << std::endl;
+            std::cout << "next t id: " << next_node_info.t_id << std::endl;
+            std::cout << "next a: " << next_node_info.a << std::endl;
+            std::cout << "-----------------" << std::endl;
 
             createNewNode(open_node_list, closed_node_list, current_node, goal_s, next_node_info);
         }
