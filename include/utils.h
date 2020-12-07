@@ -9,9 +9,15 @@
 #include <string>
 #include <fstream>
 #include <cassert>
+#include "astar_optimizer.h"
 
 namespace Utils
 {
+    void outputVelocityToFile(const std::string& filename,
+                              const std::vector<double>& position,
+                              const std::vector<double>& original_velocity,
+                              const std::vector<double>& filtered_velocity);
+
     void outputResultToFile(const std::string& filename,
                             const std::vector<double>& qp_time,
                             const std::vector<double>& qp_velocity,
@@ -19,9 +25,7 @@ namespace Utils
                             const std::vector<double>& qp_jerk);
 
     void outputResultToFile(const std::string& filename,
-                            const std::vector<double>& astar_time,
-                            const std::vector<double>& astar_velocity,
-                            const std::vector<double>& astar_acceleration);
+                            const AStarOptimizer::AStarOutputInfo& output_info);
 
 }
 

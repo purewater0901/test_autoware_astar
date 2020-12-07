@@ -10,7 +10,7 @@ int main() {
 
     const int N = 55;
     const double initial_vel = 7.0;
-    const double initial_acc = -0.8;
+    const double initial_acc = 0.0;
     const double ds = 1.0;
     const double jerk_acc = 0.8;
     const double max_accel = 1.0;
@@ -19,12 +19,12 @@ int main() {
     astar_param.max_accel = 1.0;
     astar_param.min_decel = -1.0;
     astar_param.weight_s = 10.0;
-    astar_param.weight_v = 1.0;
+    astar_param.weight_v = 100.0;
     astar_param.weight_jerk = 1.0;
     astar_param.weight_over_v = 1e6;
     astar_param.dt = 0.1;
     astar_param.ds = ds;
-    astar_param.dv = 0.3;
+    astar_param.dv = 0.5;
     astar_param.max_time = 30.0;
 
     std::vector<double> s_longitudinal(N, 0.0);
@@ -35,7 +35,7 @@ int main() {
         s_longitudinal[i] = i*ds;
 
     for(int i=0; i<30; ++i)
-        v_longitudinal[i] = 8.0;
+        v_longitudinal[i] = 15.0;
     for(int i=30; i<N; ++i)
         v_longitudinal[i] = 10.0;
     v_longitudinal.back() = 0.0;
@@ -86,9 +86,13 @@ int main() {
 
     AStarOptimizer astar_optimizer(astar_param);
     AStarOptimizer::AStarOutputInfo astar_output_info;
-    astar_optimizer.solve(initial_vel, initial_acc, 0, filtered_velocity, s_longitudinal,
+    astar_optimizer.solve(initial_vel, initial_acc, 0, filtered_velocity, v_longitudinal, s_longitudinal,
                             astar_output_info);
 
+    std::string velocity_filename = "../result/reference_velocity.csv";
+    std::string astar_filename = "../result/astar_result.csv";
+    Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
+    Utils::outputResultToFile(astar_filename,astar_output_info);
     /*
     double qp_dt = 0.2;
     double max_time = optimum_time.back();

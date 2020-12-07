@@ -63,6 +63,7 @@ public:
 
     bool solve(
             const double initial_vel, const double initial_acc, const int closest,
+            const std::vector<double>& vref,
             const std::vector<double>& vmax,
             const std::vector<double>& input_trajectory_index,
             AStarOutputInfo& output_info);
@@ -71,6 +72,7 @@ public:
 
     bool calculateByFixDistance(const double& initial_vel, const double& initial_acc, const double& goal_s,
                                 const std::vector<double>& output_trajectory_index,
+                                const std::vector<double>& ref_velocity,
                                 const std::vector<double>& max_velocity,
                                 const std::vector<std::pair<int, int>>& directions,
                                 AStarOutputInfo& output_info);

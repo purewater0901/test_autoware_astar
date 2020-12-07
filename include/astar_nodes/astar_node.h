@@ -12,6 +12,7 @@ struct NodeInformation
     double t; // Time
     double a; // Acceleration
     double max_v; // Maximum Velocity Index Constraint at position s_id
+    double ref_v; // Reference Velocity
     int s_id; // Position Id
     int v_id; // Velocity Id
     int t_id; // Time Id

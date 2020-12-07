@@ -31,6 +31,7 @@ double AStarOptimizer::calculateMaximumVelocity(const int& index,
 
 bool AStarOptimizer::solve(
         const double initial_vel, const double initial_acc, const int closest,
+        const std::vector<double>& vref,
         const std::vector<double>& vmax,
         const std::vector<double>& input_trajectory_index,
         AStarOutputInfo& output_info)
@@ -59,7 +60,7 @@ bool AStarOptimizer::solve(
     // Use Distance Fixed AStar to calculate optimum velocity and acceleration
     bool is_success = calculateByFixDistance(initial_vel, initial_acc, goal_s,
                                              output_trajectory_index,
-                                             vmax,
+                                             vref, vmax,
                                              directions, output_info);
 
     return is_success;
@@ -75,7 +76,7 @@ void AStarOptimizer::createNewNode(std::set<AStarNode*>& open_node_list,
     double current_a = current_node->getAcceleration();
     double dt = node_info.t - current_node->getTime();
     double current_cost = current_node->getActualCost();
-    double actual_cost = calculateActualCost(node_info.v, node_info.max_v, current_a, node_info.a, dt, current_cost);
+    double actual_cost = calculateActualCost(node_info.v, node_info.ref_v, current_a, node_info.a, dt, current_cost);
     double heuristic_cost = calculateHeuristicCost(node_info.s, goal_s);
 
     // Check if new node is already in the closed node list
@@ -110,6 +111,7 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                                             const double& initial_acc,
                                             const double& goal_s,
                                             const std::vector<double>& output_trajectory_index,
+                                            const std::vector<double>& ref_velocity,
                                             const std::vector<double>& max_velocity,
                                             const std::vector<std::pair<int, int>>& directions,
                                             AStarOutputInfo& output_info)
@@ -123,6 +125,8 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
     init_node_info.s = 0.0;
     init_node_info.t = 0.0;
     init_node_info.v = initial_vel;
+    init_node_info.ref_v = initial_vel;
+    init_node_info.max_v = initial_vel;
     init_node_info.a = initial_acc;
     init_node_info.s_id = static_cast<int>(init_node_info.s/param_.ds);
     init_node_info.t_id = static_cast<int>(init_node_info.t/param_.dt);
@@ -194,10 +198,11 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 // Update Velocity
                 next_node_info.v_id = current_v_id;
                 next_node_info.v = current_v;
+                next_node_info.ref_v = ref_velocity[next_node_info.s_id];
                 next_node_info.max_v = calculateMaximumVelocity(next_node_info.s_id, max_velocity);
 
                 //Check Velocity Violation
-                if(next_node_info.v_id > static_cast<int>(next_node_info.max_v/param_.ds))
+                if(next_node_info.v_id > static_cast<int>(next_node_info.max_v/param_.dv))
                     continue;
 
                 // Update acceleration
@@ -216,6 +221,7 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 // Update Velocity
                 next_node_info.v_id = current_v_id + v_direction;
                 next_node_info.v = std::max(0.0, current_v + v_direction * param_.dv);
+                next_node_info.ref_v = ref_velocity[next_node_info.s_id];
                 next_node_info.max_v = calculateMaximumVelocity(next_node_info.s_id, max_velocity);
 
                 //Check Velocity Violation
