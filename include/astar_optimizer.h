@@ -9,6 +9,7 @@
 
 #include <astar_nodes/astar_node.h>
 #include <astar_nodes/node_utils.h>
+#include <chrono>
 
 class AStarOptimizer
 {

@@ -22,9 +22,9 @@ int main() {
     astar_param.weight_v = 100.0;
     astar_param.weight_jerk = 1.0;
     astar_param.weight_over_v = 1e6;
-    astar_param.dt = 0.1;
+    astar_param.dt = 1.0;
     astar_param.ds = ds;
-    astar_param.dv = 0.5;
+    astar_param.dv = 0.2;
     astar_param.max_time = 30.0;
 
     std::vector<double> s_longitudinal(N, 0.0);
@@ -86,8 +86,15 @@ int main() {
 
     AStarOptimizer astar_optimizer(astar_param);
     AStarOptimizer::AStarOutputInfo astar_output_info;
+    std::chrono::system_clock::time_point  start, end; // 型は auto で
+    start = std::chrono::system_clock::now();
     astar_optimizer.solve(initial_vel, initial_acc, 0, filtered_velocity, v_longitudinal, s_longitudinal,
                             astar_output_info);
+    end = std::chrono::system_clock::now();  // 計測終了時間
+    double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count(); //処理に要した時間をミリ秒に変換
+    std::cout << "total time: " << elapsed*10e-6 << "[ms]" << std::endl;
+
+
 
     std::string velocity_filename = "../result/reference_velocity.csv";
     std::string astar_filename = "../result/astar_result.csv";

@@ -80,13 +80,21 @@ void AStarOptimizer::createNewNode(std::set<AStarNode*>& open_node_list,
     double heuristic_cost = calculateHeuristicCost(node_info.s, goal_s);
 
     // Check if new node is already in the closed node list
+
     AStarNode* closed_node =
             NodeUtils::findNodeOnList(closed_node_list, node_info.s_id, node_info.t_id, node_info.v_id);
+    std::cout << "Clonsed Node List Size: " << closed_node_list.size() << std::endl;
+
     if (closed_node != nullptr) return; // New node is already in the closed node list
 
     // Check if the new node is in the open node list
+    //std::chrono::system_clock::time_point  start2, end2;
+    //start2 = std::chrono::system_clock::now();
     AStarNode* successor =
             NodeUtils::findNodeOnList(open_node_list, node_info.s_id, node_info.t_id, node_info.v_id);
+    //end2 = std::chrono::system_clock::now();
+    //double elapsed2 = std::chrono::duration_cast<std::chrono::nanoseconds>(end2-start2).count();
+    //std::cout << "time2: " << elapsed2*10e-6 << "[ms]" << std::endl;
 
     if (successor == nullptr) {
         //We don't have this new node in the open node list
@@ -181,6 +189,11 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
 
         for(unsigned int i=0; i<directions.size(); ++i)
         {
+            /*
+            std::chrono::system_clock::time_point  start, end;
+            start = std::chrono::system_clock::now();
+             */
+
             //Next node information
             NodeInformation next_node_info{};
 
@@ -239,10 +252,12 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
 
                 next_node_info.t    = current_t + t_increase;
                 next_node_info.t_id = current_t_id + static_cast<int>(t_increase/param_.dt);
+
             }
 
             if (next_node_info.t > param_.max_time) continue;
 
+            /*
             std::cout << "direction s: " << directions[i].first  << std::endl;
             std::cout << "direction v: " << directions[i].second << std::endl;
             std::cout << "next s: " << next_node_info.s << std::endl;
@@ -253,9 +268,16 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
             std::cout << "next t id: " << next_node_info.t_id << std::endl;
             std::cout << "next a: " << next_node_info.a << std::endl;
             std::cout << "-----------------" << std::endl;
+             */
 
             createNewNode(open_node_list, closed_node_list, current_node, goal_s, next_node_info);
-        }
 
+            /*
+            end = std::chrono::system_clock::now();
+            double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count();
+            std::cout << "time: " << elapsed*10e-6 << "[ms]" << std::endl;
+            std::cout << "-------------------" << std::endl;
+             */
+        }
     }
 }
