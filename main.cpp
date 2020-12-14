@@ -24,7 +24,7 @@ int main() {
     astar_param.weight_over_v = 1e6;
     astar_param.dt = 1.0;
     astar_param.ds = ds;
-    astar_param.dv = 0.2;
+    astar_param.dv = 0.1;
     astar_param.max_time = 30.0;
 
     std::vector<double> s_longitudinal(N, 0.0);

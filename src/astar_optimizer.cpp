@@ -5,14 +5,15 @@ AStarOptimizer::AStarOptimizer(const AStarOptimizerParam& param) : param_(param)
 
 double AStarOptimizer::calculateHeuristicCost(const double& s, const double& goal_s)
 {
-    return param_.weight_s * std::pow(s - goal_s, 2); //Position Cost for Heuristic Cost
+    // return param_.weight_s * std::pow(s - goal_s, 2); //Position Cost for Heuristic Cost
+    return 0.0;
 }
 
 double AStarOptimizer::calculateActualCost(const double& v, const double& reference_v,
                                            const double& current_a, const double& next_a, const double& dt,
                                            const double& offset)
 {
-    return offset + param_.weight_v * std::pow((v - reference_v), 2)  // Velocity Follow cost
+    return offset + param_.weight_v * (v - reference_v)*(v - reference_v);  // Velocity Follow cost
            + param_.weight_jerk * std::pow((current_a-next_a)/dt, 2); // Jerk Cost
            //+ param_.weight_over_v * std::pow(std::fmax(0, v - reference_v), 2); // Maximum Velocity Constraint Soft Cost
 }
@@ -83,7 +84,13 @@ void AStarOptimizer::createNewNode(std::set<AStarNode*>& open_node_list,
 
     AStarNode* closed_node =
             NodeUtils::findNodeOnList(closed_node_list, node_info.s_id, node_info.t_id, node_info.v_id);
-    std::cout << "Clonsed Node List Size: " << closed_node_list.size() << std::endl;
+    //std::cout << "Clonsed Node List Size: " << closed_node_list.size() << std::endl;
+
+    if(closed_node != nullptr)
+    {
+        if(closed_node->getActualCost() > current_cost)
+            std::cout << "Warning" << std::endl;
+    }
 
     if (closed_node != nullptr) return; // New node is already in the closed node list
 
@@ -239,7 +246,9 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
 
                 //Check Velocity Violation
                 if(next_node_info.v_id > static_cast<int>(next_node_info.max_v/param_.dv) || next_node_info.v_id < 0)
+                {
                     continue;
+                }
 
                 // Update acceleration
                 next_node_info.a = (next_node_info.v * next_node_info.v- current_v*current_v)/(2*param_.ds*s_direction);
@@ -252,7 +261,11 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
 
                 next_node_info.t    = current_t + t_increase;
                 next_node_info.t_id = current_t_id + static_cast<int>(t_increase/param_.dt);
-
+                /*
+                std::cout << "t_increase: " << t_increase << std::endl;
+                std::cout << "Current t_id: " << current_t_id << std::endl;
+                std::cout << "Previous t_id: " << next_node_info.t_id << std::endl;
+                 */
             }
 
             if (next_node_info.t > param_.max_time) continue;
