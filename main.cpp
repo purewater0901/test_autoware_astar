@@ -9,8 +9,8 @@
 int main() {
 
     const int N = 55;
-    const double initial_vel = 7.0;
-    const double initial_acc = 0.0;
+    const double initial_vel = 5.0;
+    const double initial_acc = 1.0;
     const double ds = 1.0;
     const double jerk_acc = 0.8;
     const double max_accel = 1.0;
@@ -24,8 +24,8 @@ int main() {
     astar_param.weight_over_v = 1e6;
     astar_param.dt = 1.0;
     astar_param.ds = ds;
-    astar_param.dv = 0.1;
-    astar_param.max_time = 30.0;
+    astar_param.dv = 1.0;
+    astar_param.max_time = 100.0;
 
     std::vector<double> s_longitudinal(N, 0.0);
     std::vector<double> v_longitudinal(N, 0.0);
@@ -35,11 +35,10 @@ int main() {
         s_longitudinal[i] = i*ds;
 
     for(int i=0; i<30; ++i)
-        v_longitudinal[i] = 15.0;
-    for(int i=30; i<N; ++i)
         v_longitudinal[i] = 10.0;
+    for(int i=30; i<N; ++i)
+        v_longitudinal[i] = 16.0;
     v_longitudinal.back() = 0.0;
-
 
     // 2. Forward Filter
     std::vector<double> filtered_velocity(v_longitudinal.size());
@@ -86,23 +85,20 @@ int main() {
 
     AStarOptimizer astar_optimizer(astar_param);
     AStarOptimizer::AStarOutputInfo astar_output_info;
-    std::chrono::system_clock::time_point  start, end; // 型は auto で
+    std::chrono::system_clock::time_point  start, end;
     start = std::chrono::system_clock::now();
     astar_optimizer.solve(initial_vel, initial_acc, 0, filtered_velocity, v_longitudinal, s_longitudinal,
                             astar_output_info);
-    end = std::chrono::system_clock::now();  // 計測終了時間
-    double elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(end-start).count(); //処理に要した時間をミリ秒に変換
-    std::cout << "total time: " << elapsed*10e-6 << "[ms]" << std::endl;
+    end = std::chrono::system_clock::now();
+    double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
+    std::cout << "total time: " << elapsed << "[ms]" << std::endl;
 
-
-
-    std::string velocity_filename = "../result/reference_velocity.csv";
-    std::string astar_filename = "../result/astar_result.csv";
-    Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
-    Utils::outputResultToFile(astar_filename,astar_output_info);
     /*
+    std::string astar_filename = "../result/astar_result.csv";
+    Utils::outputResultToFile(astar_filename,astar_output_info);
+     */
     double qp_dt = 0.2;
-    double max_time = optimum_time.back();
+    double max_time = astar_output_info.optimum_time.back();
     int qp_size = static_cast<int>(max_time/qp_dt);
     std::vector<double> input_time(qp_size, 0.0);
     for(int i=1; i<qp_size; ++i)
@@ -110,8 +106,8 @@ int main() {
 
     std::vector<double> input_velocity;
     std::vector<double> input_acceleration;
-    LinearInterpolate::interpolate(optimum_time, optimum_velocity, input_time, input_velocity);
-    LinearInterpolate::interpolate(optimum_time, optimum_acceleration, input_time, input_acceleration);
+    LinearInterpolate::interpolate(astar_output_info.optimum_time, astar_output_info.optimum_velocity, input_time, input_velocity);
+    LinearInterpolate::interpolate(astar_output_info.optimum_time, astar_output_info.optimum_acceleration, input_time, input_acceleration);
     input_velocity.back() = 0.0;
 
     QPOptimizer::OptimizerParam param{};
@@ -129,14 +125,15 @@ int main() {
     std::vector<double> qp_velocity;
     std::vector<double> qp_acceleration;
     std::vector<double> qp_jerk;
-    qp_optimizer.solve(initial_velocity, initial_acceleration, input_velocity, input_velocity, input_acceleration,
+    qp_optimizer.solve(initial_vel, initial_acc, input_velocity, input_velocity, input_acceleration,
                        qp_time, qp_velocity, qp_acceleration, qp_jerk);
 
     std::string qp_filename = "../result/qp_result.csv";
     std::string astar_filename = "../result/astar_result.csv";
-    Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk);
-    Utils::outputResultToFile(astar_filename, input_time, input_velocity, input_acceleration);
-     */
+    std::string velocity_filename = "../result/reference_velocity.csv";
+    Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
+    Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk, qp_dt);
+    Utils::outputResultToFile(astar_filename,astar_output_info);
 
     return 0;
 }

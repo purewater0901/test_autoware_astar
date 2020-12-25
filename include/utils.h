@@ -22,7 +22,8 @@ namespace Utils
                             const std::vector<double>& qp_time,
                             const std::vector<double>& qp_velocity,
                             const std::vector<double>& qp_acceleration,
-                            const std::vector<double>& qp_jerk);
+                            const std::vector<double>& qp_jerk,
+                            const double& dt);
 
     void outputResultToFile(const std::string& filename,
                             const AStarOptimizer::AStarOutputInfo& output_info);

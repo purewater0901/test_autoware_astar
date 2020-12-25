@@ -86,12 +86,6 @@ void AStarOptimizer::createNewNode(std::set<AStarNode*>& open_node_list,
             NodeUtils::findNodeOnList(closed_node_list, node_info.s_id, node_info.t_id, node_info.v_id);
     //std::cout << "Clonsed Node List Size: " << closed_node_list.size() << std::endl;
 
-    if(closed_node != nullptr)
-    {
-        if(closed_node->getActualCost() > current_cost)
-            std::cout << "Warning" << std::endl;
-    }
-
     if (closed_node != nullptr) return; // New node is already in the closed node list
 
     // Check if the new node is in the open node list
@@ -254,10 +248,14 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 next_node_info.a = (next_node_info.v * next_node_info.v- current_v*current_v)/(2*param_.ds*s_direction);
 
                 double t_increase;
+                /*
                 if(v_direction==0)
                     t_increase = param_.ds/current_v;
                 else
                     t_increase = std::fabs((next_node_info.v - current_v)/next_node_info.a);
+                    */
+                t_increase = param_.ds/current_v;
+                //std::cout << "t_increase: " << t_increase << std::endl;
 
                 next_node_info.t    = current_t + t_increase;
                 next_node_info.t_id = current_t_id + static_cast<int>(t_increase/param_.dt);

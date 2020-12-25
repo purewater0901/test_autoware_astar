@@ -22,14 +22,19 @@ namespace Utils
                             const std::vector<double>& qp_time,
                             const std::vector<double>& qp_velocity,
                             const std::vector<double>& qp_acceleration,
-                            const std::vector<double>& qp_jerk)
+                            const std::vector<double>& qp_jerk,
+                            const double& dt)
     {
         std::ofstream writing_file;
         writing_file.open(filename, std::ios::out);
-        writing_file << "qp_time" << "," << "qp_velocity" << "," << "qp_acceleration" << "," << "qp_jerk" << std::endl;
+        writing_file << "qp_time" << "," << "qp_position" <<  "," << "qp_velocity" << "," << "qp_acceleration" << "," << "qp_jerk" << std::endl;
 
+        double s = 0.0;
         for(int i=0; i<qp_time.size(); ++i)
-            writing_file << qp_time[i] << "," << qp_velocity[i] << "," << qp_acceleration[i] << "," << qp_jerk[i] << std::endl;
+        {
+            writing_file << qp_time[i] << "," << s << "," << qp_velocity[i] << "," << qp_acceleration[i] << "," << qp_jerk[i] << std::endl;
+            s = s + qp_velocity[i] * dt + 0.5 * qp_acceleration[i] * dt * dt;
+        }
 
         writing_file.close();
     }
