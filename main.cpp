@@ -9,8 +9,8 @@
 int main() {
 
     const int N = 55;
-    const double initial_vel = 5.0;
-    const double initial_acc = 1.0;
+    const double initial_vel = 0.5;
+    const double initial_acc = 0.0;
     const double ds = 1.0;
     const double jerk_acc = 0.8;
     const double max_accel = 1.0;
@@ -34,10 +34,10 @@ int main() {
     for(int i=0; i<N; ++i)
         s_longitudinal[i] = i*ds;
 
-    for(int i=0; i<30; ++i)
-        v_longitudinal[i] = 10.0;
-    for(int i=30; i<N; ++i)
-        v_longitudinal[i] = 16.0;
+    for(int i=0; i<20; ++i)
+        v_longitudinal[i] = 3.0;
+    for(int i=20; i<N; ++i)
+        v_longitudinal[i] = 5.0;
     v_longitudinal.back() = 0.0;
 
     // 2. Forward Filter

@@ -203,7 +203,7 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
             int v_direction = directions[i].second;
             assert(s_direction==1);
 
-            if(current_v_id==0 && v_direction == 0)
+            if(current_v_id==0 && v_direction <= 0)
             {
                 // Update Position
                 next_node_info.s_id = current_s_id;
@@ -233,7 +233,7 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 next_node_info.s    = current_s + s_direction * param_.ds;
 
                 // Update Velocity
-                next_node_info.v_id = current_v_id + v_direction;
+                next_node_info.v_id = std::max(0, current_v_id + v_direction);
                 next_node_info.v = std::max(0.0, current_v + v_direction * param_.dv);
                 next_node_info.ref_v = ref_velocity[next_node_info.s_id];
                 next_node_info.max_v = calculateMaximumVelocity(next_node_info.s_id, max_velocity);
@@ -247,23 +247,14 @@ bool AStarOptimizer::calculateByFixDistance(const double& initial_vel,
                 // Update acceleration
                 next_node_info.a = (next_node_info.v * next_node_info.v- current_v*current_v)/(2*param_.ds*s_direction);
 
-                double t_increase;
-                /*
-                if(v_direction==0)
-                    t_increase = param_.ds/current_v;
+                double t_increase = 0.0;
+                if(current_v < 1e-6)
+                    t_increase = std::fabs(next_node_info.v / next_node_info.a);
                 else
-                    t_increase = std::fabs((next_node_info.v - current_v)/next_node_info.a);
-                    */
-                t_increase = param_.ds/current_v;
-                //std::cout << "t_increase: " << t_increase << std::endl;
+                    t_increase = param_.ds/current_v;
 
                 next_node_info.t    = current_t + t_increase;
                 next_node_info.t_id = current_t_id + static_cast<int>(t_increase/param_.dt);
-                /*
-                std::cout << "t_increase: " << t_increase << std::endl;
-                std::cout << "Current t_id: " << current_t_id << std::endl;
-                std::cout << "Previous t_id: " << next_node_info.t_id << std::endl;
-                 */
             }
 
             if (next_node_info.t > param_.max_time) continue;
