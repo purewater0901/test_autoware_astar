@@ -34,15 +34,19 @@ int main() {
     for(int i=0; i<N; ++i)
         s_longitudinal[i] = i*ds;
 
-    for(int i=0; i<20; ++i)
+    for(int i=0; i<10; ++i)
         v_longitudinal[i] = 3.0;
-    for(int i=20; i<N; ++i)
+    for(int i=10; i<30; ++i)
         v_longitudinal[i] = 5.0;
+    for(int i=30; i<N; ++i)
+        v_longitudinal[i] = 4.0;
     v_longitudinal.back() = 0.0;
 
     // 2. Forward Filter
     std::vector<double> filtered_velocity(v_longitudinal.size());
+    std::vector<double> filtered_acceleration(v_longitudinal.size());
     filtered_velocity.front() = initial_vel;
+    filtered_acceleration.front() = initial_acc;
     double current_vel = initial_vel;
     double current_acc = initial_acc;
     for(int i=1; i<N; ++i)
@@ -53,15 +57,30 @@ int main() {
         else
             dt = ds/current_vel;
 
-        current_acc = std::max(current_acc + jerk_acc*dt, max_accel);
-        current_vel = std::min(current_vel + current_acc * dt, v_longitudinal[i]);
+        current_acc = std::min(current_acc + jerk_acc*dt, max_accel);
+        //current_vel = std::min(current_vel + current_acc * dt, v_longitudinal[i]);
+        double next_vel = current_vel + current_acc * dt;
+        if(next_vel > v_longitudinal[i])
+        {
+            current_vel = v_longitudinal[i];
+            current_acc = 0.0;
+        }
+        else
+            current_vel = next_vel;
 
         // Store Filtered Velocity
         filtered_velocity[i] = current_vel;
+        filtered_acceleration[i] = current_acc;
     }
+
+    for(int i=0; i<v_longitudinal.size(); ++i)
+        std::cout << "v[" << i << "]: " << v_longitudinal[i] << " Filtered Velocity: " << filtered_velocity[i]
+                  << " Acc: " << filtered_acceleration[i] << std::endl;
+    std::cout << "------------------------------------" << std::endl;
 
     //3. Backward Filter
     filtered_velocity.back() = v_longitudinal.back();
+    filtered_acceleration.back() = 0.0;
     current_vel = v_longitudinal.back();
     current_acc = 0.0;
     for(int i=N-2; i>=0; --i)
@@ -72,17 +91,29 @@ int main() {
         else
             dt = ds/current_vel;
 
-        current_acc = std::max(current_acc + jerk_acc*dt, max_accel);
-        current_vel = std::min(current_vel + current_acc * dt, filtered_velocity[i]);
+        current_acc = std::min(current_acc + jerk_acc*dt, max_accel);
+        //current_vel = std::min(current_vel + current_acc * dt, filtered_velocity[i]);
+        double next_vel = current_vel + current_acc * dt;
+        if(next_vel > filtered_velocity[i])
+        {
+            current_vel = filtered_velocity[i];
+            current_acc = 0.0;
+        }
+        else
+        {
+            current_vel = next_vel;
+            filtered_acceleration[i] = -current_acc;
+        }
 
         // Store Filtered Velocity
         filtered_velocity[i] = current_vel;
     }
 
     for(int i=0; i<v_longitudinal.size(); ++i)
-        std::cout << "v[" << i << "]: " << v_longitudinal[i] << " Filtered Velocity: " << filtered_velocity[i] << std::endl;
+        std::cout << "v[" << i << "]: " << v_longitudinal[i] << " Filtered Velocity: " << filtered_velocity[i]
+                  << " Acc: " << filtered_acceleration[i] << std::endl;
 
-
+    /*
     AStarOptimizer astar_optimizer(astar_param);
     AStarOptimizer::AStarOutputInfo astar_output_info;
     std::chrono::system_clock::time_point  start, end;
@@ -93,10 +124,8 @@ int main() {
     double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
     std::cout << "total time: " << elapsed << "[ms]" << std::endl;
 
-    /*
     std::string astar_filename = "../result/astar_result.csv";
     Utils::outputResultToFile(astar_filename,astar_output_info);
-     */
     double qp_dt = 0.2;
     double max_time = astar_output_info.optimum_time.back();
     int qp_size = static_cast<int>(max_time/qp_dt);
@@ -134,6 +163,7 @@ int main() {
     Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
     Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk, qp_dt);
     Utils::outputResultToFile(astar_filename,astar_output_info);
+    */
 
     return 0;
 }
