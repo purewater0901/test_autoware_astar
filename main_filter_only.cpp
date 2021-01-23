@@ -6,8 +6,8 @@
 #include "interpolate.h"
 #include "utils.h"
 
-int main() {
-
+int main()
+{
     const int N = 55;
     const double initial_vel = 0.5;
     const double initial_acc = 0.0;
@@ -73,11 +73,6 @@ int main() {
         filtered_acceleration[i] = current_acc;
     }
 
-    for(int i=0; i<v_longitudinal.size(); ++i)
-        std::cout << "v[" << i << "]: " << v_longitudinal[i] << " Filtered Velocity: " << filtered_velocity[i]
-                  << " Acc: " << filtered_acceleration[i] << std::endl;
-    std::cout << "------------------------------------" << std::endl;
-
     //3. Backward Filter
     filtered_velocity.back() = v_longitudinal.back();
     filtered_acceleration.back() = 0.0;
@@ -113,18 +108,20 @@ int main() {
         std::cout << "v[" << i << "]: " << v_longitudinal[i] << " Filtered Velocity: " << filtered_velocity[i]
                   << " Acc: " << filtered_acceleration[i] << std::endl;
 
-    AStarOptimizer astar_optimizer(astar_param);
-    AStarOptimizer::AStarOutputInfo astar_output_info;
-    std::chrono::system_clock::time_point  start, end;
-    start = std::chrono::system_clock::now();
-    astar_optimizer.solve(initial_vel, initial_acc, 0, filtered_velocity, v_longitudinal, s_longitudinal,
-                            astar_output_info);
-    end = std::chrono::system_clock::now();
-    double elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-    std::cout << "total time: " << elapsed << "[ms]" << std::endl;
+    std::vector<double> filter_optimum_time(filtered_velocity.size());
+    filter_optimum_time.front() = 0.0;
+    for(int i=0; i<filtered_velocity.size()-1; ++i)
+    {
+        double dt;
+        if(std::fabs(filtered_velocity[i])<1e-4)
+            dt = sqrt(2*ds/max_accel);
+        else
+            dt = ds/std::fabs(filtered_velocity[i]);
 
+        filter_optimum_time[i+1] = filter_optimum_time[i] + dt;
+    }
     double qp_dt = 0.2;
-    double max_time = astar_output_info.optimum_time.back();
+    double max_time = filter_optimum_time.back();
     int qp_size = static_cast<int>(max_time/qp_dt);
     std::vector<double> input_time(qp_size, 0.0);
     for(int i=1; i<qp_size; ++i)
@@ -132,9 +129,15 @@ int main() {
 
     std::vector<double> input_velocity;
     std::vector<double> input_acceleration;
-    LinearInterpolate::interpolate(astar_output_info.optimum_time, astar_output_info.optimum_velocity, input_time, input_velocity);
-    LinearInterpolate::interpolate(astar_output_info.optimum_time, astar_output_info.optimum_acceleration, input_time, input_acceleration);
+    LinearInterpolate::interpolate(filter_optimum_time, filtered_velocity, input_time, input_velocity);
+    LinearInterpolate::interpolate(filter_optimum_time, filtered_acceleration, input_time, input_acceleration);
     input_velocity.back() = 0.0;
+
+    for(int i=0; i<input_time.size(); ++i)
+    {
+        std::cout << "time[" << i << "]: " << input_time[i] << "  velocity: " << input_velocity[i]
+                  << " acceleration: " << input_acceleration[i] << std::endl;
+    }
 
     QPOptimizer::OptimizerParam param{};
     param.max_accel = 1.0;
@@ -154,12 +157,10 @@ int main() {
     qp_optimizer.solve(initial_vel, initial_acc, input_velocity, input_velocity, input_acceleration,
                        qp_time, qp_velocity, qp_acceleration, qp_jerk);
 
-    std::string qp_filename = "../result/qp_result.csv";
-    std::string astar_filename = "../result/astar_result.csv";
-    std::string velocity_filename = "../result/reference_velocity.csv";
+    std::string qp_filename = "../result/filter_only/qp_result.csv";
+    std::string velocity_filename = "../result/filter_only/reference_velocity.csv";
     Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
     Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk, qp_dt);
-    Utils::outputResultToFile(astar_filename,astar_output_info);
 
     return 0;
 }
