@@ -17,7 +17,7 @@ if __name__ == '__main__':
     plt.ylim([-2.5, 5.5])
     plt.plot(qp_data['qp_position'], qp_data['qp_velocity'], label="qp_velocity", color="b")
     plt.plot(qp_data['qp_position'], qp_data['qp_acceleration'], label="qp_acceleration", color="red")
-    #plt.plot(qp_data['qp_time'], qp_data['qp_jerk'], label="qp_jerk", color="orange")
+    plt.plot(qp_data['qp_position'], qp_data['qp_jerk'], label="qp_jerk", color="purple")
     plt.plot(ref_vel_data["position"], ref_vel_data["original_velocity"],label="Original Velocity Limit")
     plt.plot(ref_vel_data["position"], ref_vel_data["filtered_velocity"],label="Filtered Velocity Limit")
     plt.plot(ref_vel_data["position"], ref_vel_data["filtered_acc"],label="Filtered Acceleration")
