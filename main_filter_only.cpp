@@ -8,24 +8,12 @@
 
 int main()
 {
-    const int N = 55;
+    const int N = 500;
     const double initial_vel = 0.5;
     const double initial_acc = 0.0;
-    const double ds = 1.0;
+    const double ds = 0.1;
     const double jerk_acc = 0.8;
     const double max_accel = 1.0;
-
-    AStarOptimizer::AStarOptimizerParam astar_param{};
-    astar_param.max_accel = 1.0;
-    astar_param.min_decel = -1.0;
-    astar_param.weight_s = 10.0;
-    astar_param.weight_v = 100.0;
-    astar_param.weight_jerk = 1.0;
-    astar_param.weight_over_v = 1e6;
-    astar_param.dt = 1.0;
-    astar_param.ds = ds;
-    astar_param.dv = 1.0;
-    astar_param.max_time = 100.0;
 
     std::vector<double> s_longitudinal(N, 0.0);
     std::vector<double> v_longitudinal(N, 0.0);
@@ -34,11 +22,11 @@ int main()
     for(int i=0; i<N; ++i)
         s_longitudinal[i] = i*ds;
 
-    for(int i=0; i<10; ++i)
+    for(int i=0; i<100; ++i)
         v_longitudinal[i] = 3.0;
-    for(int i=10; i<30; ++i)
+    for(int i=100; i<300; ++i)
         v_longitudinal[i] = 5.0;
-    for(int i=30; i<N; ++i)
+    for(int i=300; i<N; ++i)
         v_longitudinal[i] = 4.0;
     v_longitudinal.back() = 0.0;
 
@@ -58,7 +46,6 @@ int main()
             dt = ds/current_vel;
 
         current_acc = std::min(current_acc + jerk_acc*dt, max_accel);
-        //current_vel = std::min(current_vel + current_acc * dt, v_longitudinal[i]);
         double next_vel = current_vel + current_acc * dt;
         if(next_vel > v_longitudinal[i])
         {
@@ -87,7 +74,6 @@ int main()
             dt = ds/current_vel;
 
         current_acc = std::min(current_acc + jerk_acc*dt, max_accel);
-        //current_vel = std::min(current_vel + current_acc * dt, filtered_velocity[i]);
         double next_vel = current_vel + current_acc * dt;
         if(next_vel > filtered_velocity[i])
         {
@@ -159,7 +145,7 @@ int main()
 
     std::string qp_filename = "../result/filter_only/qp_result.csv";
     std::string velocity_filename = "../result/filter_only/reference_velocity.csv";
-    Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity);
+    Utils::outputVelocityToFile(velocity_filename, s_longitudinal, v_longitudinal, filtered_velocity, filtered_acceleration);
     Utils::outputResultToFile(qp_filename, qp_time, qp_velocity, qp_acceleration, qp_jerk, qp_dt);
 
     return 0;

@@ -20,6 +20,7 @@ if __name__ == '__main__':
     #plt.plot(qp_data['qp_time'], qp_data['qp_jerk'], label="qp_jerk", color="orange")
     plt.plot(ref_vel_data["position"], ref_vel_data["original_velocity"],label="Original Velocity Limit")
     plt.plot(ref_vel_data["position"], ref_vel_data["filtered_velocity"],label="Filtered Velocity Limit")
+    plt.plot(ref_vel_data["position"], ref_vel_data["filtered_acc"],label="Filtered Acceleration")
     plt.xlabel("s [m]", fontsize=15)
     plt.ylabel("velocity [m/s]", fontsize=15)
     plt.tick_params(labelsize=18)
